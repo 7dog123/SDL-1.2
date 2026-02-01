@@ -31,6 +31,8 @@
 #include "beos/SDL_systhread_c.h"
 #elif SDL_THREAD_DC
 #include "dc/SDL_systhread_c.h"
+#elif SDL_THREAD_PS2SDK
+#include "ps2sdk/SDL_systhread_c.h"
 #elif SDL_THREAD_OS2
 #include "os2/SDL_systhread_c.h"
 #elif SDL_THREAD_PTH

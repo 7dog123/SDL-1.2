@@ -1,8 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT
+AC_CONFIG_MACRO_DIRS([acinclude])
 AC_CONFIG_SRCDIR([src/SDL.c])
 AC_CONFIG_HEADERS([include/SDL_config.h])
-AC_GNU_SOURCE
+AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_AUX_DIR([build-scripts])
 
 dnl Set various version strings - taken gratefully from the GTk sources
@@ -147,8 +148,6 @@ AC_ARG_ENABLE(libc,
 if test x$enable_libc = xyes; then
     AC_DEFINE(HAVE_LIBC)
 
-dnl Check for C library headers
-    AC_HEADER_STDC
     AC_CHECK_HEADERS(sys/types.h stdio.h stdlib.h stddef.h stdarg.h malloc.h memory.h string.h strings.h inttypes.h stdint.h ctype.h math.h iconv.h signal.h)
 
 dnl Check for typedefs, structures, etc.
@@ -165,12 +164,12 @@ dnl Check for typedefs, structures, etc.
 
 dnl Checks for library functions.
     AC_CHECK_FUNC(mprotect,
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #include <sys/types.h>
           #include <sys/mman.h>
-        ],, [
+        ]], [[]])],[
         AC_DEFINE(HAVE_MPROTECT)
-        ]),
+        ],[]),
     )
     AC_CHECK_FUNCS(malloc calloc realloc free getenv putenv unsetenv qsort abs bcopy memset memcmp memcpy memmove strlen strlcpy strlcat strdup _strrev _strupr _strlwr strchr strrchr strstr itoa _ltoa _uitoa _ultoa strtod strtol strtoul _i64toa _ui64toa strtoll strtoull atoi atof strcmp strncmp _stricmp strcasecmp _strnicmp strncasecmp sscanf snprintf vsnprintf iconv sigaction setjmp nanosleep getauxval elf_aux_info)
 
@@ -316,21 +315,21 @@ CheckOSS()
         AC_MSG_CHECKING(for OSS audio support)
         have_oss=no
         if test x$have_oss != xyes; then
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
               #include <sys/soundcard.h>
-            ],[
+            ]], [[
               int arg = SNDCTL_DSP_SETFRAGMENT;
-            ], [have_oss=yes])
+            ]])],[have_oss=yes],[])
         fi
         if test x$have_oss != xyes; then
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
               #include <soundcard.h>
-            ],[
+            ]], [[
               int arg = SNDCTL_DSP_SETFRAGMENT;
-            ], [
+            ]])],[
             have_oss=yes
             AC_DEFINE(SDL_AUDIO_DRIVER_OSS_SOUNDCARD_H)
-            ])
+            ],[])
         fi
         AC_MSG_RESULT($have_oss)
         if test x$have_oss = xyes; then
@@ -391,11 +390,11 @@ CheckDMEDIA()
     if test x$enable_audio = xyes; then
         AC_MSG_CHECKING(for dmedia audio support)
         have_dmedia=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #include <dmedia/audio.h>
-        ],[
+        ]], [[
           ALport audio_port;
-        ], [have_dmedia=yes])
+        ]])],[have_dmedia=yes],[])
         AC_MSG_RESULT($have_dmedia)
 
         if test x$have_dmedia = xyes; then
@@ -425,11 +424,11 @@ dnl Make sure we are running on an Tru64 UNIX
         have_mme=no
         save_CFLAGS="$CFLAGS"
         CFLAGS="$CFLAGS $MME_CFLAGS"
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #include <mme_api.h>
-        ],[
+        ]], [[
           HWAVEOUT sound;
-        ], [have_mme=yes])
+        ]])],[have_mme=yes],[])
         CFLAGS="$save_CFLAGS"
         AC_MSG_RESULT($have_mme)
 
@@ -563,11 +562,11 @@ CheckARTSC()
             audio_arts=no
             save_CFLAGS="$CFLAGS"
             CFLAGS="$CFLAGS $ARTS_CFLAGS"
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
              #include <artsc.h>
-            ],[
+            ]], [[
              arts_stream_t stream;
-            ], [audio_arts=yes])
+            ]])],[audio_arts=yes],[])
             CFLAGS="$save_CFLAGS"
             AC_MSG_RESULT($audio_arts)
             if test x$audio_arts = xyes; then
@@ -797,24 +796,24 @@ CheckAltivec()
         CFLAGS="$save_CFLAGS $altivec_CFLAGS"
 
         AC_MSG_CHECKING(for Altivec with GCC altivec.h and -maltivec option)
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
         #include <altivec.h>
         vector unsigned int vzero() {
             return vec_splat_u32(0);
         }
-        ],, [
+        ]], [[]])],[
         have_gcc_altivec=yes
         have_altivec_h_hdr=yes
-        ])
+        ],[])
         AC_MSG_RESULT($have_gcc_altivec)
 
         if test x$have_gcc_altivec = xno; then
             AC_MSG_CHECKING(for Altivec with GCC -maltivec option)
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
             vector unsigned int vzero() {
                 return vec_splat_u32(0);
             }
-            ],, [have_gcc_altivec=yes])
+            ]], [[]])],[have_gcc_altivec=yes],[])
             AC_MSG_RESULT($have_gcc_altivec)
         fi
         CFLAGS="$save_CFLAGS"
@@ -843,11 +842,11 @@ CheckAltivecApple()
 
 dnl    -faltivec doesn't need altivec.h and actually emits a warning if included..
         AC_MSG_CHECKING(for Altivec with GCC -faltivec option)
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
         vector unsigned int vzero() {
             return vec_splat_u32(0);
         }
-        ],, [have_gcc_altivec=yes])
+        ]], [[]])],[have_gcc_altivec=yes],[])
         AC_MSG_RESULT($have_gcc_altivec)
         CFLAGS="$save_CFLAGS"
 
@@ -943,11 +942,11 @@ CheckVisibilityHidden()
     visibility_CFLAGS="-fvisibility=hidden"
     save_CFLAGS="$CFLAGS"
     CFLAGS="$save_CFLAGS $visibility_CFLAGS -Werror"
-    AC_TRY_COMPILE([
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
     #if !defined(__GNUC__) || __GNUC__ < 4
     #error SDL only uses visibility attributes in GCC 4 or newer
     #endif
-    ],, [have_gcc_fvisibility=yes])
+    ]], [[]])],[have_gcc_fvisibility=yes],[])
     AC_MSG_RESULT($have_gcc_fvisibility)
     CFLAGS="$save_CFLAGS"
 
@@ -964,7 +963,7 @@ CheckWarnAll()
 
     save_CFLAGS="$CFLAGS"
     CFLAGS="$save_CFLAGS -Wall"
-    AC_TRY_COMPILE([int x = 0;],, [have_gcc_Wall=yes])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int x = 0;]], [[]])],[have_gcc_Wall=yes],[])
     AC_MSG_RESULT($have_gcc_Wall)
     CFLAGS="$save_CFLAGS"
 
@@ -1211,13 +1210,13 @@ CheckX11()
             fi
             AC_MSG_CHECKING(for const parameter to _XData32)
             have_const_param_xdata32=no
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
               #include <X11/Xlibint.h>
               extern int _XData32(Display *dpy,register _Xconst long *data,unsigned len);
-            ],, [
+            ]], [[]])],[
             have_const_param_xdata32=yes
             AC_DEFINE(SDL_VIDEO_DRIVER_X11_CONST_PARAM_XDATA32)
-            ])
+            ],[])
             AC_MSG_RESULT($have_const_param_xdata32)
         fi
     fi
@@ -1232,14 +1231,14 @@ CheckPHOTON()
     if test x$enable_video = xyes -a x$enable_video_photon = xyes; then
         AC_MSG_CHECKING(for QNX Photon support)
         video_photon=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #include <Ph.h>
           #include <Pt.h>
           #include <photon/Pg.h>
           #include <photon/PdDirect.h>
-        ],[
+        ]], [[
          PgDisplaySettings_t *visual;
-        ], [video_photon=yes])
+        ]])],[video_photon=yes],[])
         AC_MSG_RESULT($video_photon)
         if test x$video_photon = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_PHOTON)
@@ -1271,9 +1270,9 @@ CheckCARBON()
     if test x$enable_video = xyes -a x$enable_video_carbon = xyes; then
         AC_MSG_CHECKING(for Carbon framework)
         have_carbon=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #include <Carbon/Carbon.h>
-        ],, [have_carbon=yes])
+        ]], [[]])],[have_carbon=yes],[])
         AC_MSG_RESULT($have_carbon)
         if test x$have_carbon = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_TOOLBOX)
@@ -1296,9 +1295,9 @@ dnl     work around that we don't have Objective-C support in autoconf
         CFLAGS="$CFLAGS -x objective-c"
         AC_MSG_CHECKING(for Cocoa framework)
         have_cocoa=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #import <Cocoa/Cocoa.h>
-        ],, [have_cocoa=yes])
+        ]], [[]])],[have_cocoa=yes],[])
         AC_MSG_RESULT($have_cocoa)
         CFLAGS="$save_CFLAGS"
         if test x$have_cocoa = xyes; then
@@ -1319,11 +1318,11 @@ CheckFBCON()
     if test x$enable_video = xyes -a x$enable_video_fbcon = xyes; then
         AC_MSG_CHECKING(for framebuffer console support)
         video_fbcon=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <linux/fb.h>
          #include <linux/kd.h>
          #include <linux/keyboard.h>
-        ],, [video_fbcon=yes])
+        ]], [[]])],[video_fbcon=yes],[])
         AC_MSG_RESULT($video_fbcon)
         if test x$video_fbcon = xyes; then
             AC_CHECK_FUNCS(getpagesize)
@@ -1362,6 +1361,26 @@ CheckDirectFB()
     fi
 }
 
+dnl See if we're compiling for PlayStation 2 using PS2DEV homebrew toolchain
+CheckPS2SDK()
+{
+    AC_ARG_ENABLE([ps2sdk],
+        [AS_HELP_STRING([--enable-ps2sdk],
+                        [Build using PS2SDK toolchain (default=yes)])],
+        [enable_ps2sdk=$enableval],
+        [enable_ps2sdk=yes])
+
+    if test "x$enable_ps2sdk" = "xyes"; then
+        AC_DEFINE([ENABLE_PS2SDK], [1], [Build with PS2SDK support])
+
+        SDLMAIN_SOURCES="$srcdir/src/main/ps2sdk/sdl_main.c"
+        SDLMAIN_LDFLAGS='-static'
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DNO_SIGNAL_H -DDEBUG_ERROR -DUSE_MATH_H -I$PS2SDK/ee/include -I$PS2SDK/common/include -I$GSKIT/include -D__PS2__ -D_EE"
+        SDL_LIBS="-lSDLmain $SDL_LIBS"
+    fi
+}
+
+
 dnl See if we're running on PlayStation 2 hardware
 CheckPS2GS()
 {
@@ -1371,10 +1390,10 @@ CheckPS2GS()
     if test x$enable_video = xyes -a x$enable_video_ps2gs = xyes; then
         AC_MSG_CHECKING(for PlayStation 2 GS support)
         video_ps2gs=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <linux/ps2/dev.h>
          #include <linux/ps2/gs.h>
-        ],, [video_ps2gs=yes])
+        ]], [[]])],[video_ps2gs=yes],[])
         AC_MSG_RESULT($video_ps2gs)
         if test x$video_ps2gs = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_PS2GS)
@@ -1393,11 +1412,11 @@ CheckPS3()
   if test x$enable_video = xyes -a x$enable_video_ps3 = xyes; then
     AC_MSG_CHECKING(for PlayStation 3 Cell support)
     video_ps3=no
-    AC_TRY_COMPILE([
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
       #include <linux/fb.h>
       #include <asm/ps3fb.h>
       #include <libspe2.h>
-    ],, [video_ps3=yes])
+    ]], [[]])],[video_ps3=yes],[])
     AC_MSG_RESULT($video_ps3)
     if test x$video_ps3 = xyes; then
       AC_DEFINE(SDL_VIDEO_DRIVER_PS3)
@@ -1418,10 +1437,10 @@ CheckGGI()
     if test x$enable_video = xyes -a x$enable_video_ggi = xyes; then
         AC_MSG_CHECKING(for GGI support)
         video_ggi=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <ggi/ggi.h>
          #include <ggi/gii.h>
-        ],, [video_ggi=yes])
+        ]], [[]])],[video_ggi=yes],[])
         AC_MSG_RESULT($video_ggi)
         if test x$video_ggi = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_GGI)
@@ -1441,16 +1460,16 @@ CheckSVGA()
     if test x$enable_video = xyes -a x$enable_video_svga = xyes; then
         AC_MSG_CHECKING([for SVGAlib (1.4.0+) support])
         video_svga=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <stdlib.h>
          #include <vga.h>
          #include <vgamouse.h>
          #include <vgakeyboard.h>
-        ],[
+        ]], [[
          if (SCANCODE_RIGHTWIN && SCANCODE_LEFTWIN) {
            exit(0);
          }
-        ], [video_svga=yes])
+        ]])],[video_svga=yes],[])
         AC_MSG_RESULT($video_svga)
         if test x$video_svga = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_SVGALIB)
@@ -1470,18 +1489,18 @@ CheckVGL()
     if test x$enable_video = xyes -a x$enable_video_vgl = xyes; then
         AC_MSG_CHECKING(for libVGL support)
         video_vgl=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <stdlib.h>
          #include <sys/fbio.h>
          #include <sys/consio.h>
          #include <sys/kbio.h>
          #include <vgl.h>
-        ],[
+        ]], [[
          VGLBitmap bitmap;
          bitmap.Type = VIDBUF32;
          bitmap.PixelBytes = 4;
          exit(bitmap.Bitmap);
-        ], [video_vgl=yes])
+        ]])],[video_vgl=yes],[])
         AC_MSG_RESULT($video_vgl)
         if test x$video_vgl = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_VGL)
@@ -1501,13 +1520,13 @@ CheckWscons()
     if test x$enable_video = xyes -a x$enable_video_wscons = xyes; then
         AC_MSG_CHECKING(for wscons support)
         video_wscons=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <sys/time.h>
          #include <dev/wscons/wsconsio.h>
          #include <dev/wscons/wsdisplay_usl_io.h>
-        ],[
+        ]], [[
          int wsmode = WSDISPLAYIO_MODE_DUMBFB;
-        ], [video_wscons=yes])
+        ]])],[video_wscons=yes],[])
         AC_MSG_RESULT($video_wscons)
         if test x$video_wscons = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_WSCONS)
@@ -1527,9 +1546,9 @@ CheckAAlib()
     if test x$enable_video = xyes -a x$enable_video_aalib = xyes; then
         AC_MSG_CHECKING(for AAlib support)
         video_aalib=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <aalib.h>
-        ],, [video_aalib=yes])
+        ]], [[]])],[video_aalib=yes],[])
         AC_MSG_RESULT($video_aalib)
         if test x$video_aalib = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_AALIB)
@@ -1554,9 +1573,9 @@ CheckCaca()
             CACA_CFLAGS=`$CACACONFIG --cflags`
             CACA_LDFLAGS=`$CACACONFIG --libs`
             save_CFLAGS="$CFLAGS"
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
              #include <caca.h>
-            ],, [video_caca=yes])
+            ]], [[]])],[video_caca=yes],[])
             CFLAGS="$save_CFLAGS"
             AC_MSG_RESULT($video_caca)
             if test x$video_caca = xyes; then
@@ -1582,9 +1601,9 @@ CheckQtopia()
         AC_LANG([C++])
         OLD_CXX="$CXXFLAGS"
         CXXFLAGS="$QTOPIA_FLAGS"
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <qpe/qpeapplication.h>
-        ],, [video_qtopia=yes])
+        ]], [[]])],[video_qtopia=yes],[])
         CXXFLAGS="$OLD_CXX"
         AC_MSG_RESULT($video_qtopia)
         if test x$video_qtopia = xyes; then
@@ -1610,9 +1629,9 @@ CheckPicoGUI()
     if test x$enable_video = xyes -a x$enable_video_picogui = xyes; then
         AC_MSG_CHECKING(for PicoGUI support)
         video_picogui=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <picogui.h>
-        ],, [video_picogui=yes])
+        ]], [[]])],[video_picogui=yes],[])
         AC_MSG_RESULT($video_picogui)
         if test x$video_picogui = xyes; then
             AC_DEFINE(SDL_VIDEO_DRIVER_PICOGUI)
@@ -1689,11 +1708,11 @@ CheckOpenGLX11()
     if test x$enable_video = xyes -a x$enable_video_opengl = xyes; then
         AC_MSG_CHECKING(for OpenGL (GLX) support)
         video_opengl=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <GL/gl.h>
          #include <GL/glx.h>
          #include <GL/glu.h>
-        ],, [video_opengl=yes])
+        ]], [[]])],[video_opengl=yes],[])
         AC_MSG_RESULT($video_opengl)
         if test x$video_opengl = xyes; then
             AC_DEFINE(SDL_VIDEO_OPENGL)
@@ -1708,9 +1727,9 @@ CheckOpenGLQNX()
     if test x$enable_video = xyes -a x$enable_video_opengl = xyes; then
         AC_MSG_CHECKING(for OpenGL (Photon) support)
         video_opengl=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <GL/gl.h>
-        ],, [video_opengl=yes])
+        ]], [[]])],[video_opengl=yes],[])
         AC_MSG_RESULT($video_opengl)
         if test x$video_opengl = xyes; then
             AC_DEFINE(SDL_VIDEO_OPENGL)
@@ -1807,13 +1826,13 @@ dnl Check for Linux 2.4 unified input event interface support
     if test x$enable_input_events = xyes; then
         AC_MSG_CHECKING(for Linux 2.4 unified input interface)
         use_input_events=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #include <linux/input.h>
-        ],[
+        ]], [[
           #ifndef EVIOCGNAME
           #error EVIOCGNAME() ioctl not available
           #endif
-        ], [use_input_events=yes])
+        ]])],[use_input_events=yes],[])
         AC_MSG_RESULT($use_input_events)
         if test x$use_input_events = xyes; then
             AC_DEFINE(SDL_INPUT_LINUXEV)
@@ -1830,9 +1849,9 @@ CheckTslib()
     if test x$enable_input_tslib = xyes; then
         AC_MSG_CHECKING(for Touchscreen library support)
         enable_input_tslib=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #include "tslib.h"
-        ],, [enable_input_tslib=yes])
+        ]], [[]])],[enable_input_tslib=yes],[])
         AC_MSG_RESULT($enable_input_tslib)
         if test x$enable_input_tslib = xyes; then
             AC_DEFINE(SDL_INPUT_TSLIB)
@@ -1961,12 +1980,12 @@ dnl This is used on Linux for glibc binary compatibility (Doh!)
         # Check to see if we have pthread support on this system
         AC_MSG_CHECKING(for pthreads)
         use_pthreads=no
-        AC_TRY_LINK([
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
          #include <pthread.h>
-        ],[
+        ]], [[
          pthread_attr_t type;
          pthread_attr_init(&type);
-        ], [use_pthreads=yes])
+        ]])],[use_pthreads=yes],[])
         AC_MSG_RESULT($use_pthreads)
         # Restore the compiler flags and libraries
         CFLAGS="$ac_save_cflags"; LIBS="$ac_save_libs"
@@ -1988,28 +2007,28 @@ dnl This is used on Linux for glibc binary compatibility (Doh!)
             AC_MSG_CHECKING(for recursive mutexes)
             has_recursive_mutexes=no
             if test x$has_recursive_mutexes = xno; then
-                AC_TRY_LINK([
+                AC_LINK_IFELSE([AC_LANG_PROGRAM([[
                   #define _GNU_SOURCE 1
                   #include <pthread.h>
-                ],[
+                ]], [[
                   pthread_mutexattr_t attr;
                   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-                ], [
+                ]])],[
                 has_recursive_mutexes=yes
                 AC_DEFINE(SDL_THREAD_PTHREAD_RECURSIVE_MUTEX)
-                ])
+                ],[])
             fi
             if test x$has_recursive_mutexes = xno; then
-                AC_TRY_LINK([
+                AC_LINK_IFELSE([AC_LANG_PROGRAM([[
                   #define _GNU_SOURCE 1
                   #include <pthread.h>
-                ],[
+                ]], [[
                   pthread_mutexattr_t attr;
                   pthread_mutexattr_setkind_np(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
-                ], [
+                ]])],[
                 has_recursive_mutexes=yes
                 AC_DEFINE(SDL_THREAD_PTHREAD_RECURSIVE_MUTEX_NP)
-                ])
+                ],[])
             fi
             AC_MSG_RESULT($has_recursive_mutexes)
 
@@ -2017,24 +2036,24 @@ dnl This is used on Linux for glibc binary compatibility (Doh!)
             if test x$enable_pthread_sem = xyes; then
                 AC_MSG_CHECKING(for pthread semaphores)
                 have_pthread_sem=no
-                AC_TRY_COMPILE([
+                AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
                   #include <pthread.h>
                   #include <semaphore.h>
-                ],, [have_pthread_sem=yes])
+                ]], [[]])],[have_pthread_sem=yes],[])
                 AC_MSG_RESULT($have_pthread_sem)
             fi
             if test x$have_pthread_sem = xyes; then
                 AC_MSG_CHECKING(for sem_timedwait)
                 have_sem_timedwait=no
-                AC_TRY_LINK([
+                AC_LINK_IFELSE([AC_LANG_PROGRAM([[
                   #include <pthread.h>
                   #include <semaphore.h>
-                ],[
+                ]], [[
                   sem_timedwait(NULL, NULL);
-                ], [
+                ]])],[
                 have_sem_timedwait=yes
                 AC_DEFINE(HAVE_SEM_TIMEDWAIT)
-                ])
+                ],[])
                 AC_MSG_RESULT($have_sem_timedwait)
             fi
 
@@ -2072,9 +2091,9 @@ CheckWIN32()
 {
     AC_MSG_CHECKING(Win32 compiler)
     have_win32_gcc=no
-    AC_TRY_COMPILE([
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
      #include <windows.h>
-    ],, [have_win32_gcc=yes])
+    ]], [[]])],[have_win32_gcc=yes],[])
     AC_MSG_RESULT($have_win32_gcc)
     if test x$have_win32_gcc != xyes; then
        AC_MSG_ERROR([
@@ -2084,12 +2103,8 @@ CheckWIN32()
 
     save_CFLAGS="$CFLAGS"
     CFLAGS="$save_CFLAGS -Werror-implicit-function-declaration"
-    AC_TRY_LINK([#include <stdlib.h>],
-                [return (int) _strtoi64 (NULL,NULL,0);],
-                AC_DEFINE(HAVE__STRTOI64))
-    AC_TRY_LINK([#include <stdlib.h>],
-                [return (int) _strtoui64(NULL,NULL,0);],
-                AC_DEFINE(HAVE__STRTOUI64))
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]], [[return (int) _strtoi64 (NULL,NULL,0);]])],[AC_DEFINE(HAVE__STRTOI64)],[])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]], [[return (int) _strtoui64(NULL,NULL,0);]])],[AC_DEFINE(HAVE__STRTOUI64)],[])
     CFLAGS="$save_CFLAGS"
 
 dnl See if the user wants to redirect standard output to files
@@ -2113,8 +2128,7 @@ CheckOS2()
 {
     AC_MSG_CHECKING(OS/2 compiler)
     have_os2_gcc=no
-    AC_TRY_COMPILE([#include <os2.h>],
-     [], [have_os2_gcc=yes])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <os2.h>]], [[]])],[have_os2_gcc=yes],[])
     AC_MSG_RESULT($have_os2_gcc)
     if test x$have_os2_gcc != xyes; then
        AC_MSG_ERROR([
@@ -2170,13 +2184,13 @@ CheckDLOPEN()
     if test x$enable_sdl_dlopen = xyes; then
         AC_MSG_CHECKING(for dlopen)
         have_dlopen=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
          #include <dlfcn.h>
-        ],[
+        ]], [[
          #if defined(MAC_OS_X_VERSION_MIN_REQUIRED) && MAC_OS_X_VERSION_MIN_REQUIRED <= 1020
          #error Use dlcompat for Mac OS X 10.2 compatibility
          #endif
-        ], [have_dlopen=yes])
+        ]])],[have_dlopen=yes],[])
         AC_MSG_RESULT($have_dlopen)
 
         if test x$have_dlopen = xyes; then
@@ -2234,7 +2248,7 @@ CheckUSBHID()
 
         AC_MSG_CHECKING(for usbhid)
         have_usbhid=no
-        AC_TRY_COMPILE([
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
           #include <sys/types.h>
           #if defined(HAVE_USB_H)
           #include <usb.h>
@@ -2253,17 +2267,17 @@ CheckUSBHID()
           #elif defined(HAVE_LIBUSBHID_H)
           #include <libusbhid.h>
           #endif
-        ],[
+        ]], [[
           struct report_desc *repdesc;
           struct usb_ctl_report *repbuf;
           hid_kind_t hidkind;
-        ], [have_usbhid=yes])
+        ]])],[have_usbhid=yes],[])
         AC_MSG_RESULT($have_usbhid)
 
         if test x$have_usbhid = xyes; then
             AC_MSG_CHECKING(for ucr_data member of usb_ctl_report)
             have_usbhid_ucr_data=no
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
               #include <sys/types.h>
               #if defined(HAVE_USB_H)
               #include <usb.h>
@@ -2282,10 +2296,10 @@ CheckUSBHID()
               #elif defined(HAVE_LIBUSBHID_H)
               #include <libusbhid.h>
               #endif
-            ],[
+            ]], [[
               struct usb_ctl_report buf;
               if (buf.ucr_data) { }
-            ], [have_usbhid_ucr_data=yes])
+            ]])],[have_usbhid_ucr_data=yes],[])
             if test x$have_usbhid_ucr_data = xyes; then
                 USB_CFLAGS="$USB_CFLAGS -DUSBHID_UCR_DATA"
             fi
@@ -2293,7 +2307,7 @@ CheckUSBHID()
 
             AC_MSG_CHECKING(for new usbhid API)
             have_usbhid_new=no
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
               #include <sys/types.h>
               #if defined(HAVE_USB_H)
               #include <usb.h>
@@ -2312,10 +2326,10 @@ CheckUSBHID()
               #elif defined(HAVE_LIBUSBHID_H)
               #include <libusbhid.h>
               #endif
-            ],[
+            ]], [[
               report_desc_t d;
               hid_start_parse(d, 1, 1);
-            ], [have_usbhid_new=yes])
+            ]])],[have_usbhid_new=yes],[])
             if test x$have_usbhid_new = xyes; then
                 USB_CFLAGS="$USB_CFLAGS -DUSBHID_NEW"
             fi
@@ -2323,11 +2337,11 @@ CheckUSBHID()
 
             AC_MSG_CHECKING(for struct joystick in machine/joystick.h)
             have_machine_joystick=no
-            AC_TRY_COMPILE([
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
               #include <machine/joystick.h>
-            ],[
+            ]], [[
               struct joystick t;
-            ], [have_machine_joystick=yes])
+            ]])],[have_machine_joystick=yes],[])
             if test x$have_machine_joystick = xyes; then
                 AC_DEFINE(SDL_HAVE_MACHINE_JOYSTICK_H)
             fi
@@ -2380,6 +2394,27 @@ CheckRPATH()
                   , enable_rpath=yes)
 }
 
+AC_ARG_ENABLE([ps2-hw-surface],
+  AS_HELP_STRING([--enable-ps2-hw-surface], [Simulate hardware surface]),
+  [enable_hw_surface=$enableval], [enable_hw_surface=yes])
+
+AC_ARG_ENABLE([ps2-input-devices],
+  AS_HELP_STRING([--enable-ps2-input-devices], [Enable USB keyboard/mouse]),
+  [enable_input_devices=$enableval], [enable_input_devices=no])
+
+AC_ARG_ENABLE([ps2-mtap],
+  AS_HELP_STRING([--enable-ps2-mtap], [Enable Multitap support]),
+  [enable_mtap=$enableval], [enable_mtap=yes])
+
+AC_ARG_ENABLE([ps2-freesd],
+  AS_HELP_STRING([--enable-ps2-freesd], [Use FreeSD instead of libsd]),
+  [enable_freesd=$enableval], [enable_freesd=yes])
+
+AC_ARG_ENABLE([ps2-freesio2],
+  AS_HELP_STRING([--enable-ps2-freesio2], [Use FreeSIO2 instead of XSIO2MAN]),
+  [enable_freesio2=$enableval], [enable_freesio2=yes])
+
+
 dnl Set up the configuration based on the host platform!
 case "$host" in
     arm-*-elf*) # FIXME: Can we get more specific for iPodLinux?
@@ -2412,6 +2447,7 @@ case "$host" in
             *-*-irix*)          ARCH=irix ;;
             *-*-aix*)           ARCH=aix ;;
             *-*-osf*)           ARCH=osf ;;
+            mips64r5900el-ps2-elf) ARCH=ps2sdk ;;
         esac
         CheckVisibilityHidden
         CheckDummyVideo
@@ -2979,6 +3015,99 @@ case "$host" in
             have_joystick=yes
         fi
         ;;
+    mips64r5900el-ps2-elf)
+        ARCH=ps2sdk
+        CheckPS2SDK
+            if test x$enable_audio = xyes; then
+              AC_DEFINE(SDL_AUDIO_DRIVER_PS2SDK)
+              SOURCES="$SOURCES $srcdir/src/audio/ps2sdk/SDL_ps2audio.c"
+              SOURCES="$SOURCES $srcdir/src/audio/ps2sdk/freesd_irx.c"
+              SOURCES="$SOURCES $srcdir/src/audio/ps2sdk/audsrv_irx.c"
+              if test x$enable_freesd = xyes; then
+                SOURCES="$SOURCES $srcdir/src/audio/ps2sdk/freesd_irx.c"
+              fi
+              have_audio=yes
+            fi
+            
+            if test x$enable_joystick = xyes; then
+              AC_DEFINE(SDL_JOYSTICK_PS2SDK)
+              SOURCES="$SOURCES $srcdir/src/joystick/ps2sdk/ps2joystick.c"
+              SOURCES="$SOURCES $srcdir/src/joystick/ps2sdk/sio2man_irx.c"
+              SOURCES="$SOURCES $srcdir/src/joystick/ps2sdk/padman_irx.c"
+              SOURCES="$SOURCES $srcdir/src/joystick/ps2sdk/mtapman_irx.c"
+              if test x$enable_freesio2 = xyes; then
+                SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2kbdevents.c"
+                SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2mouseevents.c"
+                SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2USBevents.c"
+                SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2kbd_irx.c"
+                SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2usbd_irx.c"
+                SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2mouse_irx.c"
+              fi
+              have_joystick=yes
+            fi
+            
+            if test x$enable_cdrom = xyes; then
+              AC_DEFINE(SDL_CDROM_PS2SDK)
+              SOURCES="$SOURCES $srcdir/src/cdrom/ps2sdk/SDL_syscdrom.c"
+              have_cdrom=yes
+            fi
+            
+            if test x$enable_threads = xyes; then
+              AC_DEFINE(SDL_THREAD_PS2SDK)
+              SOURCES="$SOURCES $srcdir/src/thread/ps2sdk/SDL_syssem.c"
+              SOURCES="$SOURCES $srcdir/src/thread/ps2sdk/SDL_systhread.c"
+              SOURCES="$SOURCES $srcdir/src/thread/generic/SDL_syscond.c"
+              SOURCES="$SOURCES $srcdir/src/thread/generic/SDL_sysmutex.c"
+              have_threads=yes
+            fi
+            
+            if test x$enable_timers = xyes; then
+              AC_DEFINE(SDL_TIMER_PS2SDK)
+              SOURCES="$SOURCES $srcdir/src/timer/ps2sdk/SDL_systimer.c"
+              have_timers=yes
+            fi
+            
+            if test x$enable_video = xyes; then
+              AC_DEFINE(SDL_VIDEO_PS2SDK)
+              SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2video.c"
+              SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2kbd_irx.c"
+              SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2mouse_irx.c"
+              SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2usbd_irx.c"
+            fi
+            
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lcdvd.a"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpatches.a"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lkbd.a"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lmouse.a"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -laudsrv.a"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljpeg.a"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ldmakit.a"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lgskit.a"
+            
+            if test x$enable_mtap = xyes; then
+              EXTRA_CFLAGS="$EXTRA_CFLAGS -DPS2SDL_ENABLE_MTAP"
+              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpadx.a"
+              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lmtap.a"
+            else
+              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpad.a"
+            fi
+            
+            if test x$enable_input_devices = xyes; then
+              EXTRA_CFLAGS="$EXTRA_CFLAGS -DPS2SDL_USE_INPUT_DEVICES"
+            fi
+            
+            if test x$enable_freesd = xyes; then
+              EXTRA_CFLAGS="$EXTRA_CFLAGS -DUSE_FREESD"
+            fi
+            
+            if test x$enable_freesio2 = xyes; then
+              EXTRA_CFLAGS="$EXTRA_CFLAGS -DUSE_FREESIO2"
+            fi
+            
+            if test x$enable_hw_surface = xyes; then
+              EXTRA_CFLAGS="$EXTRA_CFLAGS -DSDL_USE_HW_SURFACE"
+            fi
+            ;;
     *)
         AC_MSG_ERROR([
 *** Unsupported host:  Please add to configure.ac
@@ -3108,8 +3237,68 @@ AC_SUBST(WINDRES)
 AC_CONFIG_FILES([
     Makefile sdl-config SDL.spec SDL.qpg sdl.pc
 ])
+
+dnl ---------------------------
+dnl Generate IRX C files during configure
+dnl ---------------------------
+if test "x$enable_ps2sdk" = "xyes"; then
+
+  AC_ARG_VAR([PS2SDK], [Path to PS2SDK root (used to find iop/irx/*.irx and bin2c)])
+
+  if test -z "$PS2SDK"; then
+    PS2SDK="/usr/local/ps2dev/ps2sdk"
+  fi
+  AC_MSG_NOTICE([Using PS2SDK=$PS2SDK])
+
+  if test -x "$PS2SDK/bin/bin2c"; then
+    BIN2C="$PS2SDK/bin/bin2c"
+  else
+    AC_MSG_ERROR([bin2c not found at $PS2SDK/bin/bin2c])
+  fi
+  AC_MSG_NOTICE([Using BIN2C=$BIN2C])
+
+  dnl Ensure directories exist
+  mkdir -p "$srcdir/src/audio/ps2sdk"
+  mkdir -p "$srcdir/src/joystick/ps2sdk"
+  mkdir -p "$srcdir/src/video/ps2sdk"
+
+  dnl Audio
+  "$BIN2C" "$PS2SDK/iop/irx/audsrv.irx" \
+         "$srcdir/src/audio/ps2sdk/audsrv_irx.c" \
+         "audsrv_irx"
+  "$BIN2C" "$PS2SDK/iop/irx/ps2kbd.irx" \
+         "$srcdir/src/video/ps2sdk/ps2kbd_irx.c" \
+         "ps2kbd_irx"
+  "$BIN2C" "$PS2SDK/iop/irx/ps2mouse.irx" \
+         "$srcdir/src/video/ps2sdk/ps2mouse_irx.c" \
+         "ps2mouse_irx"
+  "$BIN2C" "$PS2SDK/iop/irx/usbd.irx" \
+         "$srcdir/src/video/ps2sdk/ps2usbd_irx.c" \
+         "ps2usbd_irx"
+
+  if test "x$enable_freesd" = "xyes"; then
+    "$BIN2C" "$PS2SDK/iop/irx/freesd.irx" \
+             "$srcdir/src/audio/ps2sdk/freesd_irx.c" \
+             "freesd_irx"
+  fi
+
+  dnl Joystick / freesio2
+  if test "x$enable_freesio2" = "xyes"; then
+    "$BIN2C" "$PS2SDK/iop/irx/freesio2.irx" \
+             "$srcdir/src/joystick/ps2sdk/sio2man_irx.c" \
+             "sio2man_irx"
+    "$BIN2C" "$PS2SDK/iop/irx/freepad.irx" \
+             "$srcdir/src/joystick/ps2sdk/padman_irx.c" \
+             "padman_irx"
+    "$BIN2C" "$PS2SDK/iop/irx/freemtap.irx" \
+             "$srcdir/src/joystick/ps2sdk/mtapman_irx.c" \
+             "mtapman_irx"
+  fi
+fi
+
 AC_CONFIG_COMMANDS([default],[
     : >build-deps
     if test x"$MAKE" = x; then MAKE=make; fi; $MAKE depend
 ])
+
 AC_OUTPUT

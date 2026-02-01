@@ -13,6 +13,7 @@ cd "$srcdir"
 cat acinclude/* >aclocal.m4
 
 "${AUTOCONF:-autoconf}"
+
 rm aclocal.m4
 rm -rf autom4te.cache
 

@@ -28,6 +28,12 @@
 #include "SDL_endian.h"
 #include "SDL_rwops.h"
 
+#ifdef __PS2__
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#endif
+
 
 #if defined(__WIN32__) && !defined(__SYMBIAN32__)
 
@@ -316,6 +322,69 @@ static int SDLCALL win32_file_close(SDL_RWops *context)
 }
 #endif /* __WIN32__ */
 
+#ifdef __PS2__
+/* PS2 POSIX-like file operations (use open/read/write/lseek/close) */
+static int SDLCALL ps2_file_seek(SDL_RWops *context, int offset, int whence)
+{
+	off_t pos;
+	int fd;
+
+	if (!context) {
+		SDL_SetError("ps2_file_seek: invalid context");
+		return -1;
+	}
+	fd = context->hidden.ps2.fd;
+	switch (whence) {
+		case RW_SEEK_SET: pos = lseek(fd, (off_t)offset, SEEK_SET); break;
+		case RW_SEEK_CUR: pos = lseek(fd, (off_t)offset, SEEK_CUR); break;
+		case RW_SEEK_END: pos = lseek(fd, (off_t)offset, SEEK_END); break;
+		default:
+			SDL_SetError("ps2_file_seek: Unknown value for 'whence'");
+			return -1;
+	}
+	if (pos == (off_t)-1) {
+		SDL_Error(SDL_EFSEEK);
+		return -1;
+	}
+	return (int)pos;
+}
+static int SDLCALL ps2_file_read(SDL_RWops *context, void *ptr, int size, int maxnum)
+{
+	ssize_t r;
+
+	if (!context || size <= 0 || maxnum <= 0) return 0;
+	r = read(context->hidden.ps2.fd, ptr, (size_t)size * (size_t)maxnum);
+	if (r < 0) {
+		SDL_Error(SDL_EFREAD);
+		return 0;
+	}
+	return (int)(r / size);
+}
+static int SDLCALL ps2_file_write(SDL_RWops *context, const void *ptr, int size, int num)
+{
+	ssize_t w;
+
+	if (!context || size <= 0 || num <= 0) return 0;
+	w = write(context->hidden.ps2.fd, ptr, (size_t)size * (size_t)num);
+	if (w < 0) {
+		SDL_Error(SDL_EFWRITE);
+		return 0;
+	}
+	return (int)(w / size);
+}
+static int SDLCALL ps2_file_close(SDL_RWops *context)
+{
+	if ( context ) {
+		if (context->hidden.ps2.fd >= 0) {
+			close(context->hidden.ps2.fd);
+			context->hidden.ps2.fd = -1;
+		}
+		SDL_FreeRW(context);
+	}
+	return(0);
+}
+#endif /* __PS2__ */
+
 #ifdef HAVE_STDIO_H
 
 /* Functions to read/write stdio file pointers */
@@ -504,6 +573,40 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 	rwops->read  = win32_file_read;
 	rwops->write = win32_file_write;
 	rwops->close = win32_file_close;
+
+#elif defined(__PS2__)
+	/* Use POSIX-style open/read/write on PS2 */
+	rwops = SDL_AllocRW();
+	if (!rwops)
+		return NULL;
+	{
+		int fd;
+		int oflags = 0;
+		mode_t mode_perm = 0666;
+
+		/* Map fopen-like mode to open flags */
+		if (SDL_strchr(mode,'r') && !SDL_strchr(mode,'w') && !SDL_strchr(mode,'a')) oflags = O_RDONLY;
+		if (SDL_strchr(mode,'w') && !SDL_strchr(mode,'a')) oflags = O_WRONLY | O_CREAT | O_TRUNC;
+		if (SDL_strchr(mode,'a')) oflags = O_WRONLY | O_CREAT | O_APPEND;
+		if (SDL_strchr(mode,'+') ) {
+			oflags = O_RDWR | O_CREAT;
+			if (SDL_strchr(mode,'w')) oflags |= O_TRUNC;
+			if (SDL_strchr(mode,'a')) oflags |= O_APPEND;
+		}
+
+		fd = open(file, oflags, mode_perm);
+		if (fd < 0) {
+			SDL_SetError("Couldn't open %s", file);
+			SDL_FreeRW(rwops);
+			return NULL;
+		}
+
+		rwops->seek  = ps2_file_seek;
+		rwops->read  = ps2_file_read;
+		rwops->write = ps2_file_write;
+		rwops->close = ps2_file_close;
+		rwops->hidden.ps2.fd = fd;
+	}
 
 #elif HAVE_STDIO_H
 

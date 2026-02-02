@@ -18,22 +18,32 @@ int SDL_HasMMX()
 #undef main
 int main(int argc, char *argv[])
 {
-#ifdef PS2SDL_ENABLE_MTAP
+	/* Initialize RPC so we can query IOP modules */
 	SifInitRpc(0);
+	/* Make sure early printf()s are visible immediately */
+	setbuf(stdout, NULL);
 
+#ifdef PS2SDL_ENABLE_MTAP
 	smod_mod_info_t info;
-	if(smod_get_mod_by_name("sio2man",&info)!=0)
-	{
-		printf("PS2SDL: sio2man detected, resetting iop\n");
+	/* smod_get_mod_by_name() returns 0 when the module is found */
+	if (smod_get_mod_by_name("sio2man", &info) == 0) {
+		printf("PS2SDL: sio2man detected, resetting IOP\n");
+		fflush(stdout);
+
+		/* Cleanly shut down IOP services before resetting */
 		sceCdInit(SCECdEXIT);
 		SifExitIopHeap();
 		SifLoadFileExit();
 		SifExitRpc();
 
+		/* Reset IOP and wait for it to come back up */
 		SifIopReset(NULL, 0);
-		while (!SifIopSync()) {};
+		while (!SifIopSync()) { /* wait */ };
+
+		/* Reinitialize RPC after reset */
+		SifInitRpc(0);
 	}
 #endif
-	SifInitRpc(0);
-	return(SDL_main(argc, argv));
+
+	return SDL_main(argc, argv);
 }

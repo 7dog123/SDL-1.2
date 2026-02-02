@@ -20,8 +20,22 @@
     slouken@libsdl.org
 */
 
-/* Stub until we implement threads on this platform */
-typedef struct kthread* SYS_ThreadHandle;
+#include <tamtypes.h>
+
+/* PS2 per-thread control block — exposed so other compilation units
+ * can inspect thread state (tid, semaphore, stack, SDL data, etc.)
+ */
+typedef struct PS2_Thread {
+    s32 tid;        /* kernel thread id */
+    int sema;       /* semaphore id used for join/wakeup */
+    void *stack;    /* allocated stack pointer */
+    void *sdl_data; /* SDL thread function data pointer */
+    int joined;     /* set when SDL_SYS_WaitThread cleaned up */
+    int exited;     /* set when thread_entry finishes */
+} PS2_Thread;
+
+/* System thread handle is a pointer to the PS2_Thread control block */
+typedef struct PS2_Thread* SYS_ThreadHandle;
 /*
 #ifndef DISABLE_THREADS
 #define DISABLE_THREADS

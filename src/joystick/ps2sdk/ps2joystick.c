@@ -148,7 +148,7 @@ int SDL_SYS_JoystickInit(void)
 	int ret;
 	int mtap_enabled;
 	int index;
-	int numports, numdevs;
+	int numports;
 	int port, slot;
 
 	printf("SDL_Joystick: JoystickInit begins\n");
@@ -221,7 +221,6 @@ int SDL_SYS_JoystickInit(void)
 	printf("SDL_Joystick: mtapInit: %d\n", ret);
 #endif
 
-	numdevs = 0;
 	numports = padGetPortMax();
 	
 	printf("SDL_Joystick: numports %d\n", numports);
@@ -502,11 +501,46 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
 /* Function to close a joystick after use */
 void SDL_SYS_JoystickClose(SDL_Joystick *joystick)
 {
+	if ( joystick == NULL ) {
+		return;
+	}
+
+	if ( joystick->hwdata ) {
+		int port = joystick->hwdata->port;
+		int slot = joystick->hwdata->slot;
+
+		/* Close the pad port */
+		padPortClose(port, slot);
+
+		SDL_free(joystick->hwdata);
+		joystick->hwdata = NULL;
+	}
 }
 
 /* Function to perform any system-specific joystick related cleanup */
 void SDL_SYS_JoystickQuit(void)
 {
+	int i;
+
+	/* Close any open pad ports we recorded during init */
+	for (i = 0; i < SDL_numjoysticks; i++) {
+		int port = joyports[i];
+		int slot = joyslots[i];
+		if (port >= 0) {
+			padPortClose(port, slot);
+		}
+	}
+
+	/* Shutdown libpad */
+	padEnd();
+
+#ifdef PS2SDL_ENABLE_MTAP
+	/* If mtap was used, try to close possible ports */
+	mtapPortClose(0);
+	mtapPortClose(1);
+#endif
+
+	SDL_numjoysticks = 0;
 }
 
 #endif /* SDL_JOYSTICK_PS2SDK || defined(SDL_JOYSTICK_DISABLED) */

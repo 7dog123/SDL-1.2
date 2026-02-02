@@ -428,7 +428,7 @@ static __inline__ int CPU_haveAltiVec(void)
  * Not public - for internal ARM 32 bit blitters' use only
  */
 #if !defined(__arm__)  /* not an ARM CPU at all. */
-static int
+static __attribute__((unused)) int
 CPU_haveARMSIMD(void)
 {
 	return 0;
@@ -524,7 +524,7 @@ static __inline__  int readProcAuxvForNeon(void)
 }
 #endif
 
-static __inline__ int CPU_haveNEON(void)
+static __inline__ __attribute__((unused)) int CPU_haveNEON(void)
 {
 #if !defined(__arm__)  /* not an ARM CPU at all. */
 	return 0;
@@ -574,40 +574,52 @@ static Uint32 SDL_CPUFeatures = 0xFFFFFFFF;
 
 static Uint32 SDL_GetCPUFeatures(void)
 {
-	if ( SDL_CPUFeatures == 0xFFFFFFFF ) {
-		SDL_CPUFeatures = 0;
-		if ( CPU_haveRDTSC() ) {
-			SDL_CPUFeatures |= CPU_HAS_RDTSC;
+	/* PS2: Emotion Engine (EE) is a MIPS R5900-based CPU with vector units
+	 * (VU0, VU1) and custom multimedia instructions. It does not provide
+	 * x86 features like RDTSC, MMX, 3DNow, or SSE, nor ARM NEON/Altivec.
+	 * Use #ifdef _EE to short-circuit feature detection for PS2 builds.
+	 */
+	#ifdef _EE
+		if ( SDL_CPUFeatures == 0xFFFFFFFF ) {
+			SDL_CPUFeatures = 0; /* No x86/ARM SIMD features available */
 		}
-		if ( CPU_haveMMX() ) {
-			SDL_CPUFeatures |= CPU_HAS_MMX;
+		return SDL_CPUFeatures;
+	#else
+		if ( SDL_CPUFeatures == 0xFFFFFFFF ) {
+			SDL_CPUFeatures = 0;
+			if ( CPU_haveRDTSC() ) {
+				SDL_CPUFeatures |= CPU_HAS_RDTSC;
+			}
+			if ( CPU_haveMMX() ) {
+				SDL_CPUFeatures |= CPU_HAS_MMX;
+			}
+			if ( CPU_haveMMXExt() ) {
+				SDL_CPUFeatures |= CPU_HAS_MMXEXT;
+			}
+			if ( CPU_have3DNow() ) {
+				SDL_CPUFeatures |= CPU_HAS_3DNOW;
+			}
+			if ( CPU_have3DNowExt() ) {
+				SDL_CPUFeatures |= CPU_HAS_3DNOWEXT;
+			}
+			if ( CPU_haveSSE() ) {
+				SDL_CPUFeatures |= CPU_HAS_SSE;
+			}
+			if ( CPU_haveSSE2() ) {
+				SDL_CPUFeatures |= CPU_HAS_SSE2;
+			}
+			if ( CPU_haveAltiVec() ) {
+				SDL_CPUFeatures |= CPU_HAS_ALTIVEC;
+			}
+			if ( CPU_haveARMSIMD() ) {
+				SDL_CPUFeatures |= CPU_HAS_ARM_SIMD;
+			}
+			if ( CPU_haveNEON() ) {
+				SDL_CPUFeatures |= CPU_HAS_NEON;
+			}
 		}
-		if ( CPU_haveMMXExt() ) {
-			SDL_CPUFeatures |= CPU_HAS_MMXEXT;
-		}
-		if ( CPU_have3DNow() ) {
-			SDL_CPUFeatures |= CPU_HAS_3DNOW;
-		}
-		if ( CPU_have3DNowExt() ) {
-			SDL_CPUFeatures |= CPU_HAS_3DNOWEXT;
-		}
-		if ( CPU_haveSSE() ) {
-			SDL_CPUFeatures |= CPU_HAS_SSE;
-		}
-		if ( CPU_haveSSE2() ) {
-			SDL_CPUFeatures |= CPU_HAS_SSE2;
-		}
-		if ( CPU_haveAltiVec() ) {
-			SDL_CPUFeatures |= CPU_HAS_ALTIVEC;
-		}
-		if ( CPU_haveARMSIMD() ) {
-			SDL_CPUFeatures |= CPU_HAS_ARM_SIMD;
-		}
-		if ( CPU_haveNEON() ) {
-			SDL_CPUFeatures |= CPU_HAS_NEON;
-		}
-	}
-	return SDL_CPUFeatures;
+		return SDL_CPUFeatures;
+	#endif /* _EE */
 }
 
 SDL_bool SDL_HasRDTSC(void)

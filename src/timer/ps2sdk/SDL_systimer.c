@@ -150,14 +150,32 @@ void SDL_SYS_TimerQuit(void)
 
 int SDL_SYS_StartTimer(void)
 {
-	printf("FIXME: StartTimer not implemented!\n");
-	return(-1);
+	/* Ensure interrupt handler is installed and enabled */
+	if (tim1_handler_id < 0) {
+		tim1_handler_id = AddIntcHandler(INTC_TIM1, ms_handler, 0);
+	}
+	EnableIntc(INTC_TIM1);
+
+	/* reset counter and start timer (set run bit)
+	 * NOTE: bit 0 is the timer start bit on TIM1_MODE
+	 */
+	*T1_COUNT = 0;
+	*T1_MODE |= 1;
+	/* make sure interrupts are enabled on the CPU */
+	__asm__ volatile("sync.l; ei");
+
+	return 0;
 }
 
 void SDL_SYS_StopTimer(void)
 {
-	printf("FIXME: StopTimer not implemented!\n");
-	return;
+	/* stop the timer (clear run bit) and reset counter */
+	*T1_MODE &= ~1;
+	*T1_COUNT = 0;
+
+	/* disable timer interrupt */
+	DisableIntc(INTC_TIM1);
 }
+
 
 #endif /* SDL_TIMER_PS2SDK || defined(SDL_TIMERS_DISABLED) */

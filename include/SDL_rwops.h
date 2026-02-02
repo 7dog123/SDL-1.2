@@ -80,15 +80,20 @@ typedef struct SDL_RWops {
 	 	FILE *fp;
 	    } stdio;
 #endif
-	    struct {
-		Uint8 *base;
-	 	Uint8 *here;
+#ifdef __PS2__
+	struct {
+		int fd;
+	} ps2;
+#endif
+	struct {
+	Uint8 *base;
+ 		Uint8 *here;
 		Uint8 *stop;
-	    } mem;
-	    struct {
-		void *data1;
-	    } unknown;
-	} hidden;
+	} mem;
+	struct {
+	void *data1;
+	} unknown;
+} hidden;
 
 } SDL_RWops;
 

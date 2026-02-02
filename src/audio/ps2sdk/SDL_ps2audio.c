@@ -129,7 +129,7 @@ static void PS2AUD_PlayAudio(_THIS)
 		this->hidden->playing = 1;
 	}
 
-	audsrv_play_audio(this->hidden->mixbuf, this->hidden->mixlen);
+	audsrv_play_audio((const char *)this->hidden->mixbuf, this->hidden->mixlen);
 
 	#if 0
 	/* uncomment for debugging purposes only */

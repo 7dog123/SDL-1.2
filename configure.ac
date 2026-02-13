@@ -1376,6 +1376,7 @@ CheckPS2SDK()
         SDLMAIN_SOURCES="$srcdir/src/main/ps2sdk/sdl_main.c"
         SDLMAIN_LDFLAGS='-static'
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DNO_SIGNAL_H -DDEBUG_ERROR -DUSE_MATH_H -I$PS2SDK/ee/include -I$PS2SDK/common/include -I$GSKIT/include -D__PS2__ -D_EE"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$PS2SDK/ee/lib -L$GSKIT/lib"
         SDL_LIBS="-lSDLmain $SDL_LIBS"
     fi
 }
@@ -3075,21 +3076,21 @@ case "$host" in
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2usbd_irx.c"
             fi
             
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lcdvd.a"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpatches.a"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lkbd.a"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lmouse.a"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -laudsrv.a"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljpeg.a"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ldmakit.a"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lgskit.a"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lcdvd"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpatches"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lkbd"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lmouse"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -laudsrv"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljpeg"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ldmakit"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lgskit"
             
             if test x$enable_mtap = xyes; then
               EXTRA_CFLAGS="$EXTRA_CFLAGS -DPS2SDL_ENABLE_MTAP"
-              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpadx.a"
-              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lmtap.a"
+              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpadx"
+              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lmtap"
             else
-              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpad.a"
+              EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lpad"
             fi
             
             if test x$enable_input_devices = xyes; then

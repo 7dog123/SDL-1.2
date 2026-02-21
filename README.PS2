@@ -1,0 +1,112 @@
+# SDL 1.2 on Sony PlayStation 2
+-------------------------------
+
+This is a basic guide for building and installing **SDL 1.2** for the Sony PlayStation 2 using the PS2 homebrew toolchain.
+
+## Requirements
+
+Before building SDL, make sure you have the following installed:
+
+* PS2DEV Homebrew Toolchain (ps2sdk + toolchain + gskit + ps2sdk-ports)
+* Git
+* Standard build tools (`make`, `gcc`, etc.)
+
+### Install PS2DEV Toolchain
+
+Clone the toolchain repository:
+
+```
+git clone https://github.com/ps2dev/ps2dev.git
+```
+
+Follow the instructions in that repository to build and install the toolchain.
+
+After installation, ensure environment variables are set correctly:
+
+```
+export PS2DEV=/path/to/ps2dev # Example: /usr/local/ps2dev
+export PS2SDK=$PS2DEV/ps2sdk
+export GSKIT=$PS2DEV/gsKit
+export PATH=$PATH:$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin
+```
+
+---
+
+## Configuration
+
+Configure SDL for the PS2 target:
+
+```
+CFLAGS_FOR_TARGET="-G0 -O2 -gdwarf-2 -gz" ./configure \
+  --host=mips64r5900el-ps2-elf \
+  --prefix=${PS2SDK}/ports \
+  --disable-shared \
+  --enable-ps2sdk \
+  --disable-loadso \
+  --disable-pthreads \
+  --enable-ps2-hw-surface \
+  --disable-ps2-input-devices \
+  --enable-ps2-mtap \
+  --enable-ps2-freesd \
+  --enable-ps2-freesio2
+```
+
+### Notes on Flags
+
+* `--host=mips64r5900el-ps2-elf` — Targets the PS2 CPU
+* `--enable-ps2sdk` — Enables PS2SDK integration
+* `--enable-ps2-hw-surface` — Uses hardware surfaces
+* `--disable-pthreads` — PS2 does not support pthreads
+* `--disable-loadso` — Disables dynamic loading
+* `--enable-ps2-mtap` — Multitap support
+* `--enable-ps2-freesd` — Audio driver
+* `--enable-ps2-freesio2` — Input driver
+
+---
+
+## Building
+
+Compile SDL:
+
+```
+make
+```
+
+---
+
+## Installation
+
+Install into the PS2SDK ports directory:
+
+```
+make install
+```
+
+---
+
+## Using SDL in Your Project
+
+When compiling your PS2 application, link against SDL:
+
+EE_CFLAGS := $(shell mips64r5900el-ps2-elf-pkg-config --cflags sdl)
+EE_LDFLAGS := $(shell mips64r5900el-ps2-elf-pkg-config --libs sdl)
+
+---
+
+## Troubleshooting
+
+* **Toolchain not found**
+  Ensure `PS2DEV` and `PS2SDK` environment variables are set.
+
+* **Compiler errors**
+  Verify you are using the PS2 toolchain (`mips64r5900el-ps2-elf-gcc`).
+
+* **Missing libraries**
+  Confirm SDL installed correctly under `${PS2SDK}/ports`.
+
+---
+
+## Credits
+
+* SDL Library — Simple DirectMedia Layer
+* PS2DEV Community

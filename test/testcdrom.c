@@ -37,6 +37,8 @@ static void PrintStatus(int driveindex, SDL_CD *cdrom)
 		case CD_ERROR:
 			status_str = "error state";
 			break;
+		default:
+			status_str = "unknown state";
 	}
 	printf("Drive %d status: %s\n", driveindex, status_str);
 	if ( status >= CD_PLAYING ) {
@@ -127,7 +129,7 @@ int main(int argc, char *argv[])
 #ifdef TEST_NULLCD
 	cdrom = NULL;
 #endif
-	
+
 	/* Find out which function to perform */
 	for ( ; argv[i]; ++i ) {
 		if ( strcmp(argv[i], "-status") == 0 ) {

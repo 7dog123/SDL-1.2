@@ -24607,6 +24607,7 @@ printf "%s\n" "#define ENABLE_PS2SDK 1" >>confdefs.h
         SDLMAIN_SOURCES="$srcdir/src/main/ps2sdk/sdl_main.c"
         SDLMAIN_LDFLAGS='-static'
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DNO_SIGNAL_H -DDEBUG_ERROR -DUSE_MATH_H -I$PS2SDK/ee/include -I$PS2SDK/common/include -I$GSKIT/include -D__PS2__ -D_EE"
+                SDL_CFLAGS="$SDL_CFLAGS -D__PS2__ -D_EE"
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$PS2SDK/ee/lib -L$GSKIT/lib"
         SDL_LIBS="-lSDLmain $SDL_LIBS"
     fi
@@ -24664,6 +24665,7 @@ printf "%s\n" "$video_ps2gl" >&6; }
             SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2gl.c"
             EXTRA_CFLAGS="$EXTRA_CFLAGS -I$PS2SDK/ports/include -DNO_SDL_GLU"
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$PS2SDK/ports/lib -lps2gl -lps2stuff -lstdc++ -ldma"
+                        SDL_CFLAGS="$SDL_CFLAGS -I$PS2SDK/ports/include -DNO_SDL_GLU"
         fi
     fi
 }

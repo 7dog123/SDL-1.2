@@ -54,6 +54,12 @@ case "$host" in
         MATHLIB=""
         SYS_GL_LIBS=""
         ;;
+    mips64r5900el-ps2-elf)
+        EXE=".elf"
+        MATHLIB="-lm"
+        dnl the p2gl stack and ps2sdk support libs come through sdl-config --libs
+        SYS_GL_LIBS=""
+        ;;
     *-*-os2*)
         EXE=".exe"
         MATHLIB=""

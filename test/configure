@@ -3669,6 +3669,11 @@ fi
         MATHLIB=""
         SYS_GL_LIBS=""
         ;;
+    mips64r5900el-ps2-elf)
+        EXE=".elf"
+        MATHLIB="-lm"
+                SYS_GL_LIBS=""
+        ;;
     *-*-os2*)
         EXE=".exe"
         MATHLIB=""

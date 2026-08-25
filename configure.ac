@@ -1376,6 +1376,8 @@ CheckPS2SDK()
         SDLMAIN_SOURCES="$srcdir/src/main/ps2sdk/sdl_main.c"
         SDLMAIN_LDFLAGS='-static'
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DNO_SIGNAL_H -DDEBUG_ERROR -DUSE_MATH_H -I$PS2SDK/ee/include -I$PS2SDK/common/include -I$GSKIT/include -D__PS2__ -D_EE"
+        dnl applications need __PS2__ so that SDL_main.h renames main()
+        SDL_CFLAGS="$SDL_CFLAGS -D__PS2__ -D_EE"
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$PS2SDK/ee/lib -L$GSKIT/lib"
         SDL_LIBS="-lSDLmain $SDL_LIBS"
     fi
@@ -1409,6 +1411,8 @@ CheckPS2GL()
             SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2gl.c"
             EXTRA_CFLAGS="$EXTRA_CFLAGS -I$PS2SDK/ports/include -DNO_SDL_GLU"
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$PS2SDK/ports/lib -lps2gl -lps2stuff -lstdc++ -ldma"
+            dnl export the gl header location to applications via sdl-config/sdl.pc
+            SDL_CFLAGS="$SDL_CFLAGS -I$PS2SDK/ports/include -DNO_SDL_GLU"
         fi
     fi
 }

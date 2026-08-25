@@ -868,6 +868,7 @@ enable_video_cocoa
 enable_video_fbcon
 enable_video_directfb
 enable_ps2sdk
+enable_video_ps2gl
 enable_video_ps2gs
 enable_video_ps3
 enable_video_ggi
@@ -1624,6 +1625,7 @@ Optional Features:
   --enable-video-fbcon    use framebuffer console video driver [default=yes]
   --enable-video-directfb use DirectFB video driver [default=yes]
   --enable-ps2sdk         Build using PS2SDK toolchain (default=yes)
+  --enable-video-ps2gl    use P2GL OpenGL video driver [default=yes]
   --enable-video-ps2gs    use PlayStation 2 GS video driver [default=yes]
   --enable-video-ps3      use PlayStation 3 Cell driver [default=yes]
   --enable-video-ggi      use GGI video driver [default=no]
@@ -24610,6 +24612,61 @@ printf "%s\n" "#define ENABLE_PS2SDK 1" >>confdefs.h
     fi
 }
 
+CheckPS2GL()
+{
+    # Check whether --enable-video-ps2gl was given.
+if test ${enable_video_ps2gl+y}
+then :
+  enableval=$enable_video_ps2gl;
+else case e in #(
+  e) enable_video_ps2gl=yes ;;
+esac
+fi
+
+    if test x$enable_video = xyes -a x$enable_video_opengl = xyes -a x$enable_ps2sdk = xyes; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for P2GL OpenGL support" >&5
+printf %s "checking for P2GL OpenGL support... " >&6; }
+        video_ps2gl=no
+        save_CFLAGS="$CFLAGS"
+        CFLAGS="$CFLAGS -I$PS2SDK/ports/include"
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+         #include <GL/gl.h>
+         #include <GL/ps2gl.h>
+
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  video_ps2gl=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+        CFLAGS="$save_CFLAGS"
+        if test x$video_ps2gl = xyes -a -f "$PS2SDK/ports/lib/libps2gl.a"; then
+            video_ps2gl=yes
+        else
+            video_ps2gl=no
+        fi
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $video_ps2gl" >&5
+printf "%s\n" "$video_ps2gl" >&6; }
+        if test x$video_ps2gl = xyes; then
+            printf "%s\n" "#define SDL_VIDEO_OPENGL 1" >>confdefs.h
+
+            printf "%s\n" "#define SDL_VIDEO_OPENGL_PS2GL 1" >>confdefs.h
+
+            SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2gl.c"
+            EXTRA_CFLAGS="$EXTRA_CFLAGS -I$PS2SDK/ports/include -DNO_SDL_GLU"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$PS2SDK/ports/lib -lps2gl -lps2stuff -lstdc++ -ldma"
+        fi
+    fi
+}
 
 CheckPS2GS()
 {
@@ -27690,6 +27747,7 @@ case "$host" in
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2kbd_irx.c"
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2mouse_irx.c"
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2usbd_irx.c"
+              CheckPS2GL
             fi
 
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lcdvd"

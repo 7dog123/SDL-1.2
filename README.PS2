@@ -64,6 +64,28 @@ CFLAGS_FOR_TARGET="-G0 -O2 -gdwarf-2 -gz" ./configure \
 
 ---
 
+## OpenGL (P2GL)
+
+If [ps2gl](https://github.com/ps2dev/ps2gl) and ps2stuff are installed under
+`${PS2SDK}/ports`, configure enables P2GL support automatically. It can be
+disabled with `--disable-video-ps2gl`.
+
+P2GL requires no extra setup; pass `SDL_OPENGL` to `SDL_SetVideoMode()` as
+usual:
+
+```c
+SDL_Surface *screen = SDL_SetVideoMode(640, 448, 32, SDL_FULLSCREEN | SDL_OPENGL);
+/* render with standard gl* calls, then: */
+SDL_GL_SwapBuffers();
+```
+
+The display is a double buffered 640x448 interlaced mode on NTSC
+(640x512 on PAL), with a 24-bit depth buffer. Note that P2GL does not
+implement every desktop OpenGL function; consult its documentation for
+supported functionality.
+
+---
+
 ## Building
 
 Compile SDL:

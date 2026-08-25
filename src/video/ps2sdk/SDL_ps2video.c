@@ -37,6 +37,10 @@
 #include "SDL_ps2USBevents.h"
 #include "SDL_ps2mouseevents.h"
 
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+#include "SDL_ps2gl.h"
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
@@ -194,6 +198,9 @@ static int PS2_VideoInit(SDL_VideoDevice *device, SDL_PixelFormat *vformat)
 
 	gsKit_init_screen(gsGlobal);
 
+	/* remember the height of one interlaced field for P2GL */
+	device->hidden->screen_h = gsGlobal->Height;
+
 #ifdef SDL_USE_HW_SURFACE
 	gsKit_mode_switch(gsGlobal, GS_PERSISTENT);
 #else
@@ -212,6 +219,9 @@ static int PS2_VideoInit(SDL_VideoDevice *device, SDL_PixelFormat *vformat)
 
 static void PS2_VideoQuit(SDL_VideoDevice *device)
 {
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	PS2_GL_Shutdown(device);
+#endif
 }
 
 static int PS2_Available(void)
@@ -222,6 +232,12 @@ static int PS2_Available(void)
 
 static void PS2_DeleteDevice(SDL_VideoDevice *device)
 {
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	if (device->gl_data != NULL)
+	{
+		free(device->gl_data);
+	}
+#endif
 	free(device->hidden);
 	free(device);
 }
@@ -281,6 +297,11 @@ static SDL_Surface *PS2_SetVideoMode(SDL_VideoDevice *device, SDL_Surface *curre
 	int Rmask, Gmask, Bmask, Amask;
 	int visible_w, visible_h;
 	float ratio, w_ratio, h_ratio;
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	int is_opengl = ((flags & SDL_OPENGL) == SDL_OPENGL);
+#else
+	int is_opengl = 0;
+#endif
 
 	printf("SDL_SetVideoMode %d x %d x %d\n", width, height, bpp);
 
@@ -290,6 +311,16 @@ static SDL_Surface *PS2_SetVideoMode(SDL_VideoDevice *device, SDL_Surface *curre
 		free(gsTexture.Mem);
 		gsTexture.Mem = 0;
 	}
+
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	if (!is_opengl && device->gl_data != NULL && device->gl_data->gl_active)
+	{
+		/* coming back from an OpenGL mode, restore the gsKit display */
+		device->gl_data->gl_active = 0;
+		gsKit_init_screen(gsGlobal);
+		clear_screens();
+	}
+#endif
 
 	/* keep gcc happy */
 	Rmask = Gmask = Bmask = Amask = 0x00000000;
@@ -333,6 +364,15 @@ static SDL_Surface *PS2_SetVideoMode(SDL_VideoDevice *device, SDL_Surface *curre
 		return NULL;
 	}
 
+	size = 0;
+
+	if (is_opengl)
+	{
+		/* P2GL manages its own frame buffers, no gs texture needed */
+		psm = GS_PSM_CT32;
+	}
+	else
+	{
 	size = gsKit_texture_size(width, height, psm);
 //	if (size < 640*400*2) size = 640*400*2;
 
@@ -375,6 +415,7 @@ static SDL_Surface *PS2_SetVideoMode(SDL_VideoDevice *device, SDL_Surface *curre
 
 	/* enable bilinear */
 	gsTexture.Filter = use_filter ? GS_FILTER_LINEAR : GS_FILTER_NEAREST;
+	}
 
 	//printf("vmem 0x%x, vclut 0x%x, diff %d\n", gsTexture.Vram, gsTexture.VramClut, gsTexture.VramClut - gsTexture.Vram);
 	
@@ -386,6 +427,26 @@ static SDL_Surface *PS2_SetVideoMode(SDL_VideoDevice *device, SDL_Surface *curre
 		SDL_SetError("Couldn't allocate new pixel format for requested mode");
 		return(NULL);
 	}
+
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	if (is_opengl)
+	{
+		/* OpenGL surface, rendering goes through P2GL */
+		current->flags = SDL_FULLSCREEN | SDL_OPENGL;
+		current->w = width;
+		current->h = height;
+		current->pitch = 0;
+		current->pixels = NULL;
+
+		if (PS2_GL_CreateContext(device) < 0)
+		{
+			return NULL;
+		}
+
+		SDL_SetCursor(0);
+		return current;
+	}
+#endif
 
 	/* set framebuffer */
 #ifdef SDL_USE_HW_SURFACE
@@ -528,6 +589,14 @@ static void PS2_UpdateRects(SDL_VideoDevice *device, int numrects, SDL_Rect *rec
 		return;
 	}
 
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	if (device->gl_data != NULL && device->gl_data->gl_active)
+	{
+		/* rendering is done via OpenGL, not via surface updates */
+		return;
+	}
+#endif
+
 	if (gsTexture.Mem == NULL || gsTexture.Vram == 0)
 	{
 		return;
@@ -567,6 +636,14 @@ static void PS2_UpdateRects(SDL_VideoDevice *device, int numrects, SDL_Rect *rec
 
 static int PS2_FlipHWSurface(SDL_VideoDevice *device, SDL_Surface *surface)
 {
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	if (device->gl_data != NULL && device->gl_data->gl_active)
+	{
+		/* use SDL_GL_SwapBuffers() instead */
+		return (0);
+	}
+#endif
+
 #ifdef SDL_USE_HW_SURFACE
 	
 	//printf("flipping HW surface\n");	
@@ -611,6 +688,18 @@ static SDL_VideoDevice *PS2_CreateDevice(int devindex)
 		return NULL;
 	}
 
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	device->gl_data = (struct SDL_PrivateGLData *)malloc((sizeof *device->gl_data));
+	if (device->gl_data == NULL)
+	{
+		SDL_OutOfMemory();
+		free(device->hidden);
+		free(device);
+		return NULL;
+	}
+	memset(device->gl_data, '\0', (sizeof *device->gl_data));
+#endif
+
 	device->VideoInit = PS2_VideoInit;
 	device->ListModes = PS2_ListModes;
 	device->SetVideoMode = PS2_SetVideoMode;
@@ -625,6 +714,13 @@ static SDL_VideoDevice *PS2_CreateDevice(int devindex)
 	device->PumpEvents = PS2_PumpEvents;
 	device->UpdateRects = PS2_UpdateRects;
 	device->FlipHWSurface = PS2_FlipHWSurface;
+#ifdef SDL_VIDEO_OPENGL_PS2GL
+	device->GL_LoadLibrary = PS2_GL_LoadLibrary;
+	device->GL_GetProcAddress = PS2_GL_GetProcAddress;
+	device->GL_GetAttribute = PS2_GL_GetAttribute;
+	device->GL_MakeCurrent = PS2_GL_MakeCurrent;
+	device->GL_SwapBuffers = PS2_GL_SwapBuffers;
+#endif
 	device->free = PS2_DeleteDevice;
 
 	memset(device->hidden, '\0', (sizeof *device->hidden));

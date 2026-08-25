@@ -1381,6 +1381,37 @@ CheckPS2SDK()
     fi
 }
 
+dnl See if P2GL (OpenGL for PlayStation 2) is available
+CheckPS2GL()
+{
+    AC_ARG_ENABLE(video-ps2gl,
+[AS_HELP_STRING([--enable-video-ps2gl], [use P2GL OpenGL video driver [default=yes]])],
+                  , enable_video_ps2gl=yes)
+    if test x$enable_video = xyes -a x$enable_video_opengl = xyes -a x$enable_ps2sdk = xyes; then
+        AC_MSG_CHECKING(for P2GL OpenGL support)
+        video_ps2gl=no
+        save_CFLAGS="$CFLAGS"
+        CFLAGS="$CFLAGS -I$PS2SDK/ports/include"
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+         #include <GL/gl.h>
+         #include <GL/ps2gl.h>
+        ]], [[]])],[video_ps2gl=yes],[])
+        CFLAGS="$save_CFLAGS"
+        if test x$video_ps2gl = xyes -a -f "$PS2SDK/ports/lib/libps2gl.a"; then
+            video_ps2gl=yes
+        else
+            video_ps2gl=no
+        fi
+        AC_MSG_RESULT($video_ps2gl)
+        if test x$video_ps2gl = xyes; then
+            AC_DEFINE(SDL_VIDEO_OPENGL)
+            AC_DEFINE(SDL_VIDEO_OPENGL_PS2GL)
+            SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2gl.c"
+            EXTRA_CFLAGS="$EXTRA_CFLAGS -I$PS2SDK/ports/include -DNO_SDL_GLU"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$PS2SDK/ports/lib -lps2gl -lps2stuff -lstdc++ -ldma"
+        fi
+    fi
+}
 
 dnl See if we're running on PlayStation 2 hardware
 CheckPS2GS()
@@ -3074,6 +3105,7 @@ case "$host" in
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2kbd_irx.c"
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2mouse_irx.c"
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2usbd_irx.c"
+              CheckPS2GL
             fi
             
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lcdvd"

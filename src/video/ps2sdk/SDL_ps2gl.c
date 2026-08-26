@@ -26,6 +26,9 @@
 */
 #include "SDL_config.h"
 
+#include <gsKit.h>
+#include <kernel.h>
+
 #if SDL_VIDEO_OPENGL_PS2GL
 
 #include "SDL.h"
@@ -114,6 +117,10 @@ static int create_gs_memory(_THIS)
 	pglAddGsMemSlot(TEXTURE_BASE(pages) + 80, 64, PSM_CT32);
 	pglAddGsMemSlot(TEXTURE_BASE(pages) + 144, 64, PSM_CT32);
 
+	/* ps2gl builds DMA chains from these structures; make sure the
+	   caches are clean before any transfer touches them */
+	FlushCache(0);
+
 	return 0;
 }
 
@@ -130,6 +137,7 @@ int PS2_GL_CreateContext(_THIS)
 			return -1;
 		}
 	}
+	FlushCache(0);
 
 	if (!pglHasGsMemBeenInitted()) {
 		if (create_gs_memory(_this) < 0) {

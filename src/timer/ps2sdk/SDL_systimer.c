@@ -72,6 +72,13 @@ void SDL_Delay(Uint32 ms)
 {
 	int i;
 
+	/* the sleeping threads below are woken by the timer interrupt;
+	 * make sure it is actually installed, or we would never wake up */
+	if (tim1_handler_id < 0) {
+		extern int SDL_SYS_TimerInit(void);
+		SDL_SYS_TimerInit();
+	}
+
 	if (nsleeping_threads >= MAX_SLEEPING_THREADS)
 	{
 		fprintf(stderr, "too many threads are sleeping at SDL_Delay (current thread %d)\n", GetThreadId());
@@ -124,6 +131,10 @@ static int ms_handler(int ca)
 /* This is only called if the event thread is not running */
 int SDL_SYS_TimerInit(void)
 {
+	if (tim1_handler_id >= 0) {
+		return 0; /* already installed */
+	}
+
 	printf("initializing timer..\n");
 
 	tim1_handler_id = AddIntcHandler(INTC_TIM1, ms_handler, 0);

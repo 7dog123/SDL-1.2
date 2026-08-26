@@ -5,6 +5,7 @@
 
 #include "SDL.h"
 
+
 #ifdef __MACOS__
 #define HAVE_OPENGL
 #endif
@@ -605,6 +606,7 @@ int RunGLTest( int argc, char* argv[],
 
 	glShadeModel(GL_SMOOTH);
 
+
 	/* Loop until done. */
 	start_time = SDL_GetTicks();
 	frames = 0;
@@ -729,6 +731,7 @@ int RunGLTest( int argc, char* argv[],
 		}
 
 		SDL_GL_SwapBuffers( );
+
 
 		/* Check for error conditions. */
 		gl_error = glGetError( );

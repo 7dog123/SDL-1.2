@@ -44,8 +44,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
+
 #include <gsKit.h>
 #include <dmaKit.h>
+
 
 #ifdef SAVE_RCSID
 static char rcsid =
@@ -94,6 +96,8 @@ static const u64 TEXTURE_RGBAQ = GS_SETREG_RGBAQ(0x80,0x80,0x80,0x80,0x00);
 static u32 gsClut[256] __attribute__ ((aligned(64)));
 static GSGLOBAL *gsGlobal = NULL;
 static GSTEXTURE gsTexture;
+
+
 
 /* hacks */
 static float force_ratio = 0.0f;
@@ -153,16 +157,17 @@ static void clear_screens()
 	}
 }
 
-static int PS2_VideoInit(SDL_VideoDevice *device, SDL_PixelFormat *vformat)
+/* Bring up gsKit and the display. Called from sdl_main.c before SDL_Init
+   so that the graphics hardware is alive before any other subsystem runs. */
+void PS2SDL_PreInitVideo(void)
 {
 	int pal;
 
-	vformat->BitsPerPixel = 16;
-	vformat->BytesPerPixel = 2;
-	vformat->Rmask = 0x0000001f;
-	vformat->Gmask = 0x000003e0;
-	vformat->Bmask = 0x00007c00;
-	vformat->Amask = 0x00008000;
+	if (gsGlobal != NULL)
+	{
+		/* already up */
+		return;
+	}
 
 	gsGlobal = gsKit_init_global();
 
@@ -179,7 +184,7 @@ static int PS2_VideoInit(SDL_VideoDevice *device, SDL_PixelFormat *vformat)
 	if (gsGlobal == NULL)
 	{
 		SDL_SetError("Failed to initialize gsKit");
-		return -1;
+		return;
 	}
 
 	/* initialize the DMAC */
@@ -198,18 +203,39 @@ static int PS2_VideoInit(SDL_VideoDevice *device, SDL_PixelFormat *vformat)
 
 	gsKit_init_screen(gsGlobal);
 
-	/* remember the height of one interlaced field for P2GL */
-	device->hidden->screen_h = gsGlobal->Height;
 
 #ifdef SDL_USE_HW_SURFACE
 	gsKit_mode_switch(gsGlobal, GS_PERSISTENT);
 #else
 	gsKit_mode_switch(gsGlobal, GS_ONESHOT);
 #endif	
-	
 
 	clear_screens();
-	
+}
+
+static int PS2_VideoInit(SDL_VideoDevice *device, SDL_PixelFormat *vformat)
+{
+	vformat->BitsPerPixel = 16;
+	vformat->BytesPerPixel = 2;
+	vformat->Rmask = 0x0000001f;
+	vformat->Gmask = 0x000003e0;
+	vformat->Bmask = 0x00007c00;
+	vformat->Amask = 0x00008000;
+
+	if (gsGlobal == NULL)
+	{
+		PS2SDL_PreInitVideo();
+
+		if (gsGlobal == NULL)
+		{
+			SDL_SetError("Failed to initialize gsKit");
+			return -1;
+		}
+	}
+
+	/* remember the height of one interlaced field for P2GL */
+	device->hidden->screen_h = gsGlobal->Height;
+
 #ifdef PS2SDL_USE_INPUT_DEVICES
 	/* initialize keyboard and mouse */
 	initialize_devices(device);
@@ -304,6 +330,9 @@ static SDL_Surface *PS2_SetVideoMode(SDL_VideoDevice *device, SDL_Surface *curre
 #endif
 
 	printf("SDL_SetVideoMode %d x %d x %d\n", width, height, bpp);
+
+
+
 
 	if (gsTexture.Mem != NULL)
 	{
@@ -417,6 +446,7 @@ static SDL_Surface *PS2_SetVideoMode(SDL_VideoDevice *device, SDL_Surface *curre
 	gsTexture.Filter = use_filter ? GS_FILTER_LINEAR : GS_FILTER_NEAREST;
 	}
 
+
 	//printf("vmem 0x%x, vclut 0x%x, diff %d\n", gsTexture.Vram, gsTexture.VramClut, gsTexture.VramClut - gsTexture.Vram);
 	
 	if (! SDL_ReallocFormat(current, bpp, Rmask, Gmask, Bmask, Amask)) 
@@ -509,6 +539,7 @@ static SDL_Surface *PS2_SetVideoMode(SDL_VideoDevice *device, SDL_Surface *curre
 						    		1.0, TEXTURE_RGBAQ);
 							 
 #endif		
+
 
 	SDL_SetCursor(0);
 	return current;
@@ -644,6 +675,7 @@ static int PS2_FlipHWSurface(SDL_VideoDevice *device, SDL_Surface *surface)
 	}
 #endif
 
+
 #ifdef SDL_USE_HW_SURFACE
 	
 	//printf("flipping HW surface\n");	
@@ -668,6 +700,7 @@ static int PS2_FlipHWSurface(SDL_VideoDevice *device, SDL_Surface *surface)
 static SDL_VideoDevice *PS2_CreateDevice(int devindex)
 {
 	SDL_VideoDevice *device;
+
 
 	/* Initialize all variables that we clean on shutdown */
 	device = (SDL_VideoDevice *)malloc(sizeof(SDL_VideoDevice));

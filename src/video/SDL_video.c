@@ -171,6 +171,7 @@ int SDL_VideoInit (const char *driver_name, Uint32 flags)
 	SDL_PixelFormat vformat;
 	Uint32 video_flags;
 
+
 	/* Toggle the event thread flags, based on OS requirements */
 #if defined(MUST_THREAD_EVENTS)
 	flags |= SDL_INIT_EVENTTHREAD;
@@ -936,6 +937,7 @@ SDL_Surface * SDL_SetVideoMode (int width, int height, int bpp, Uint32 flags)
 	video->info.vfmt = SDL_VideoSurface->format;
 	video->info.current_w = SDL_VideoSurface->w;
 	video->info.current_h = SDL_VideoSurface->h;
+
 
 	/* We're done! */
 	return(SDL_PublicSurface);

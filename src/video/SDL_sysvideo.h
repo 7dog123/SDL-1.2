@@ -347,6 +347,9 @@ extern VideoBootStrap DirectFB_bootstrap;
 #if SDL_VIDEO_DRIVER_PS2GS
 extern VideoBootStrap PS2GS_bootstrap;
 #endif
+#if SDL_VIDEO_DRIVER_PS2SDK
+extern VideoBootStrap PS2SDK_bootstrap;
+#endif
 #if SDL_VIDEO_DRIVER_PS3
 extern VideoBootStrap PS3_bootstrap;
 #endif

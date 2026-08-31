@@ -3069,7 +3069,7 @@ case "$host" in
             fi
             
             if test x$enable_video = xyes; then
-              AC_DEFINE(SDL_VIDEO_PS2SDK)
+              AC_DEFINE(SDL_VIDEO_DRIVER_PS2SDK)
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2video.c"
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2kbd_irx.c"
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2mouse_irx.c"
@@ -3082,8 +3082,9 @@ case "$host" in
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lmouse"
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -laudsrv"
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljpeg"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ldmakit"
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lgskit"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ldmakit"
+           
             
             if test x$enable_mtap = xyes; then
               EXTRA_CFLAGS="$EXTRA_CFLAGS -DPS2SDL_ENABLE_MTAP"

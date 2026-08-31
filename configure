@@ -27684,7 +27684,7 @@ case "$host" in
             fi
 
             if test x$enable_video = xyes; then
-              printf "%s\n" "#define SDL_VIDEO_PS2SDK 1" >>confdefs.h
+              printf "%s\n" "#define SDL_VIDEO_DRIVER_PS2SDK 1" >>confdefs.h
 
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/SDL_ps2video.c"
               SOURCES="$SOURCES $srcdir/src/video/ps2sdk/ps2kbd_irx.c"
